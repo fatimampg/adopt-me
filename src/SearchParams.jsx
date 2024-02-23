@@ -1,4 +1,11 @@
-import { useState, useContext } from "react";
+import {
+  useState,
+  useContext,
+  usedDeferredValue,
+  useMemo,
+  useDeferredValue,
+  useTransition,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdoptedPetContext from "./AdoptedPetContext";
 import Results from "./Results";
@@ -13,12 +20,18 @@ const SearchParams = () => {
     animal: "",
     breed: "",
   });
+  const [adoptedPet] = useContext(AdoptedPetContext);
   const [animal, setAnimal] = useState("");
   const [breeds] = useBreedList(animal);
-  const [adoptedPet, _] = useContext(AdoptedPetContext);
+  const [isPending, startTransition] = useTransition();
 
   const results = useQuery(["search", requestParams], fetchSearch);
   const pets = results?.data?.pets ?? [];
+  const deferredPets = useDeferredValue(pets); //if I get new pets back from API it's ok to interrupt re-rendering results. The new value of pets will only be given when there is nothing left in the queue.
+  const renderedPets = useMemo(
+    () => <Results pets={deferredPets} />,
+    [deferredPets],
+  ); // give a rendered result of deferredPets (and only update when deferredPets changes). renderedPets is the Results that only gets updated when reacts render queue is empty.
 
   return (
     <div className="search-params">
@@ -31,7 +44,9 @@ const SearchParams = () => {
             breed: formData.get("breed") ?? "",
             location: formData.get("location") ?? "",
           }; //current state of the form
-          setRequestParams(obj); // feeding into --> const results = useQuery(["search", requestParams], fetchSearch)
+          startTransition(() => {
+            setRequestParams(obj); // feeding into --> const results = useQuery(["search", requestParams], fetchSearch)
+          });
         }}
       >
         {adoptedPet ? (
@@ -41,7 +56,12 @@ const SearchParams = () => {
         ) : null}
         <label htmlFor="location">
           Location
-          <input name="location" id="location" placeholder="Location" />
+          <input
+            type="text"
+            name="location"
+            id="location"
+            placeholder="Location"
+          />
           {/* //not tracking location so there is no need to set value */}
         </label>
 
@@ -71,10 +91,16 @@ const SearchParams = () => {
           </select>
         </label>
 
-        <button>Submit</button>
+        {isPending ? (
+          <div className="mini loading-pane">
+            <h2 className="loader">🐩</h2>
+          </div>
+        ) : (
+          <button>Submit</button>
+        )}
       </form>
 
-      <Results pets={pets} />
+      {renderedPets}
     </div>
   );
 };

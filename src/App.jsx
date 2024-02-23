@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { useState, lazy, Suspense } from "react";
+import { Routes, Route, Link } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AdoptedPetContext from "./AdoptedPetContext";
-import Details from "./Details";
-import SearchParams from "./SearchParams";
+
+const Details = lazy(() => import("./Details")); //dynamic import for ES6 modules (imports Details only when needed)
+const SearchParams = lazy(() => import("./SearchParams"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,9 +19,15 @@ const App = () => {
   const adoptedPet = useState(null); //adoptedPet is a Hook, is an array with 2 things (we are not destructuring here)
   return (
     <div>
-      <BrowserRouter>
+      <AdoptedPetContext.Provider value={adoptedPet}>
         <QueryClientProvider client={queryClient}>
-          <AdoptedPetContext.Provider value={adoptedPet}>
+          <Suspense
+            fallback={
+              <div className="loading-pane">
+                <h2 className="loader">🐶</h2>
+              </div>
+            }
+          >
             <header>
               <Link to="/">Adopt Me!</Link>
             </header>
@@ -29,13 +35,11 @@ const App = () => {
               <Route path="/details/:id" element={<Details />} />
               <Route path="/" element={<SearchParams />} />
             </Routes>
-          </AdoptedPetContext.Provider>
+          </Suspense>
         </QueryClientProvider>
-      </BrowserRouter>
+      </AdoptedPetContext.Provider>
     </div>
   );
 };
 
-const container = document.getElementById("root");
-const root = createRoot(container);
-root.render(<App />);
+export default App;
