@@ -1,7 +1,10 @@
-import { Component } from "react"; //needed for creating class components
+import { Component, MouseEvent } from "react"; //needed for creating class components
 
-//every class component, has a render function
-class Carousel extends Component {
+interface IProps {
+  images: string[];
+}
+
+class Carousel extends Component<IProps> {
   //state initialization (to keep track of the index of the currently active image)
   state = {
     active: 0, //the first image will be the one presented bigger
@@ -11,15 +14,20 @@ class Carousel extends Component {
     images: ["https://pets-images.dev-apis.com/pets/none.jpg"],
   }; //provide default values of the images prop, in case no images prop is provided
 
-  handleIndexClick = (e) => {
-    this.setState({
-      active: +e.target.dataset.index, //dataset which refers to all data-.... this on an object (DOM method) (in this case, data-index) (index is a string (everything that comes from the DOM is a string --> thats why "+" was added in the beginning, to transform a string into a number))
-    });
+  handleIndexClick = (event: MouseEvent<HTMLElement>) => {
+    if (!(event.target instanceof HTMLElement)) {
+      return;
+    }
+    if (event.target.dataset.index) {
+      this.setState({
+        active: +event.target.dataset.index, //dataset which refers to all data... this in this case refers to data-index) (index is a string (everything that comes from the DOM is a string --> "+" added to transform it into a number))
+      });
+    }
   };
 
   // handleIndexClick(){
   //   console.log(this);
-  // } --> here, this = undefined (not the component). When I create a normal function, when I invoque ot it creates a new scope at the point of invocation (using the array functions --> invoqued with no context, so it captures carousel)
+  // } --> here, this = undefined (not the component). When I create a normal function, when I invoque it, it creates a new scope at the point of invocation (using the array functions --> invoqued with no context, so it captures carousel)
 
   render() {
     //throw new Error("lol error");
@@ -34,7 +42,7 @@ class Carousel extends Component {
           {images.map(
             (
               photo, //current value in the array.map
-              index //mapping over the image array [array.map(function(currentValue, index))]
+              index, //mapping over the image array [array.map(function(currentValue, index))]
             ) => (
               // eslint-disable-next-line
               <img
@@ -45,7 +53,7 @@ class Carousel extends Component {
                 className={index === active ? "active" : ""} //if the index is equal to the one that is active, is has active class, otherwise it has no class.
                 alt="animal thumbnail"
               />
-            )
+            ),
           )}
         </div>
       </div>

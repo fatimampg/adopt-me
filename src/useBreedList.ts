@@ -1,9 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { QueryStatus, useQuery } from "@tanstack/react-query";
+import { Animal } from "./APIResponsesTypes";
 import fetchBreedList from "./fetchBreedList";
 
-export default function useBreedList(animal) {
+export default function useBreedList(animal: Animal) {
   const results = useQuery(["breeds", animal], fetchBreedList); //cachekey: breeds, give: animal
-  return [results?.data?.breeds ?? [], results.status]; //if data is not available, then give me an empty array, otherwise, give me the results
+
+  //if data is not available, then give me an empty array, otherwise, give me the results:
+  return [results?.data?.breeds ?? [], results.status] as [
+    string[],
+    QueryStatus,
+  ]; //"as [..." to ensure that it wil allways give this shape: a string and a status (not one or another type)
 }
 
 // Before using React Query:
